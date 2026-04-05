@@ -122,7 +122,6 @@ while [ "$#" -gt 0 ]; do
 done
 
 require_command docker
-require_command shasum
 require_command date
 
 if ! docker buildx version >/dev/null 2>&1; then
@@ -143,7 +142,6 @@ mkdir -p "$OUTPUT_DIR"
 IMAGE_BASENAME="${IMAGE_NAME##*/}"
 PLATFORM_ID="$(platform_to_id "$PLATFORM")"
 ARCHIVE_PATH="$OUTPUT_DIR/${IMAGE_BASENAME}_${CADDY_VERSION}_${PLATFORM_ID}.tar"
-CHECKSUM_PATH="${ARCHIVE_PATH}.sha256"
 VERSION_TAG="$CADDY_VERSION"
 
 trap cleanup_builder EXIT INT TERM
@@ -165,11 +163,8 @@ docker buildx build \
   --output "type=docker,dest=$ARCHIVE_PATH" \
   .
 
-shasum -a 256 "$ARCHIVE_PATH" > "$CHECKSUM_PATH"
-
 printf '\nBuild complete.\n'
 printf 'Docker archive: %s\n' "$ARCHIVE_PATH"
-printf 'Checksum file: %s\n' "$CHECKSUM_PATH"
 printf '\nLoad the image with:\n'
 printf '  docker load -i %s\n' "$ARCHIVE_PATH"
 printf '\nExpected tags after load:\n'

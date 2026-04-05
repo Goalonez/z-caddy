@@ -46,7 +46,6 @@ services:
 
 ```text
 dist/z-caddy_<caddy-version>_linux-amd64.tar
-dist/z-caddy_<caddy-version>_linux-amd64.tar.sha256
 ```
 
 在目标机器上导入：
@@ -93,7 +92,7 @@ github.com/caddyserver/nginx-adapter
 --image-name <name>        导出包内使用的镜像名，默认：z-caddy
 --image-tag <tag>          导出包内使用的主标签，默认：latest
 --modules-file <path>      模块清单文件，默认：modules.txt
---output-dir <path>        tar 和校验文件输出目录，默认：dist
+--output-dir <path>        导出 tar 文件输出目录，默认：dist
 ```
 
 查看帮助：

@@ -46,7 +46,6 @@ This builds an offline archive for `linux/amd64` by default and writes files to 
 
 ```text
 dist/z-caddy_<caddy-version>_linux-amd64.tar
-dist/z-caddy_<caddy-version>_linux-amd64.tar.sha256
 ```
 
 Load the archive on the target machine:
@@ -93,7 +92,7 @@ github.com/caddyserver/nginx-adapter
 --image-name <name>        Image name used inside the exported archive. Default: z-caddy
 --image-tag <tag>          Primary image tag inside the exported archive. Default: latest
 --modules-file <path>      Module list file. Default: modules.txt
---output-dir <path>        Output directory for tar and checksum files. Default: dist
+--output-dir <path>        Output directory for exported tar files. Default: dist
 ```
 
 Show help:

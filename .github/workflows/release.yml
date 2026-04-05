@@ -174,7 +174,6 @@ jobs:
           ## Assets
 
           - Offline Docker archives for `linux/amd64` and `linux/arm64`
-          - SHA256 checksum files for each archive
           EOF
 
       - name: Publish GitHub Release
