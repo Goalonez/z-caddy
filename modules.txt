@@ -1,0 +1,4 @@
+# One Caddy module per line.
+# Lines starting with # are ignored.
+
+github.com/caddy-dns/cloudflare@v0.2.4

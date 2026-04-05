@@ -1,0 +1,16 @@
+dist/
+tmp/
+*.log
+.DS_Store
+
+# Local environment files
+.env
+.env.*
+
+# Local AI helper files
+AGENTS.md
+CLAUDE.md
+
+# Editor settings
+.idea/
+.vscode/

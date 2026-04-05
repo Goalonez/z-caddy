@@ -1,0 +1,10 @@
+.git/
+.github/
+dist/
+tmp/
+*.log
+.DS_Store
+.idea/
+.vscode/
+AGENTS.md
+CLAUDE.md

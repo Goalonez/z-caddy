@@ -1,0 +1,164 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      caddy_version:
+        description: Optional explicit Caddy version, for example 2.11.2. Leave empty to use the latest upstream release.
+        required: false
+        type: string
+      dockerhub_repository:
+        description: Optional Docker Hub repository, for example goalonez/z-caddy. Overrides the repository variable.
+        required: false
+        type: string
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      caddy_version: ${{ steps.prepare.outputs.caddy_version }}
+      release_tag: ${{ steps.prepare.outputs.release_tag }}
+      dockerhub_repository: ${{ steps.prepare.outputs.dockerhub_repository }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve target version and repository
+        id: prepare
+        env:
+          INPUT_CADDY_VERSION: ${{ inputs.caddy_version }}
+          INPUT_DOCKERHUB_REPOSITORY: ${{ inputs.dockerhub_repository }}
+          DEFAULT_DOCKERHUB_REPOSITORY: goalonez/z-caddy
+        run: |
+          set -euo pipefail
+
+          if [ -n "${INPUT_CADDY_VERSION}" ]; then
+            CADDY_VERSION="${INPUT_CADDY_VERSION}"
+          else
+            CADDY_VERSION="$(bash ./scripts/get-latest-caddy-version.sh)"
+          fi
+
+          if [ -n "${INPUT_DOCKERHUB_REPOSITORY}" ]; then
+            DOCKERHUB_REPOSITORY="${INPUT_DOCKERHUB_REPOSITORY}"
+          else
+            DOCKERHUB_REPOSITORY="${DEFAULT_DOCKERHUB_REPOSITORY}"
+          fi
+
+          printf 'caddy_version=%s\n' "$CADDY_VERSION" >> "$GITHUB_OUTPUT"
+          printf 'release_tag=v%s\n' "$CADDY_VERSION" >> "$GITHUB_OUTPUT"
+          printf 'dockerhub_repository=%s\n' "$DOCKERHUB_REPOSITORY" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            artifact_name: build-linux-amd64
+          - platform: linux/arm64
+            artifact_name: build-linux-arm64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build archive
+        run: ./scripts/build.sh --platform "${{ matrix.platform }}" --caddy-version "${{ needs.prepare.outputs.caddy_version }}"
+
+      - name: Upload archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: dist/*
+          if-no-files-found: error
+
+  publish-dockerhub:
+    needs:
+      - prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push multi-architecture image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            CADDY_VERSION=${{ needs.prepare.outputs.caddy_version }}
+            MODULES_FILE=modules.txt
+          tags: |
+            ${{ needs.prepare.outputs.dockerhub_repository }}:latest
+            ${{ needs.prepare.outputs.dockerhub_repository }}:${{ needs.prepare.outputs.caddy_version }}
+
+  publish:
+    needs:
+      - prepare
+      - build
+      - publish-dockerhub
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Write release notes
+        env:
+          CADDY_VERSION: ${{ needs.prepare.outputs.caddy_version }}
+          DOCKERHUB_REPOSITORY: ${{ needs.prepare.outputs.dockerhub_repository }}
+        run: |
+          set -euo pipefail
+          MODULE_LINES="$(grep -v '^[[:space:]]*#' modules.txt | grep -v '^[[:space:]]*$' | sed 's/^/- `/' | sed 's/$/`/')"
+
+          cat <<EOF > release-notes.md
+          ## Summary
+
+          - Built from upstream Caddy ${CADDY_VERSION}
+          - Published Docker Hub image: `${DOCKERHUB_REPOSITORY}:${CADDY_VERSION}` and `${DOCKERHUB_REPOSITORY}:latest`
+
+          ## Modules
+
+          ${MODULE_LINES}
+
+          ## Assets
+
+          - Offline Docker archives for `linux/amd64` and `linux/arm64`
+          - SHA256 checksum files for each archive
+          EOF
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.release_tag }}
+          name: ${{ needs.prepare.outputs.release_tag }}
+          target_commitish: ${{ github.sha }}
+          body_path: release-notes.md
+          files: release-assets/**/*
