@@ -9,6 +9,7 @@ DEFAULT_IMAGE_TAG="latest"
 DEFAULT_MODULES_FILE="modules.txt"
 DEFAULT_OUTPUT_DIR="dist"
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+WORKDIR="$(pwd)"
 
 usage() {
   cat <<'EOF'
@@ -58,6 +59,17 @@ resolve_caddy_version() {
   fi
 
   printf '%s\n' "$CADDY_VERSION"
+}
+
+resolve_path() {
+  case "$1" in
+    /*)
+      printf '%s\n' "$1"
+      ;;
+    *)
+      printf '%s/%s\n' "$WORKDIR" "$1"
+      ;;
+  esac
 }
 
 platform_to_id() {
@@ -125,6 +137,7 @@ fi
 
 CADDY_VERSION="$(resolve_caddy_version)"
 
+OUTPUT_DIR="$(resolve_path "$OUTPUT_DIR")"
 mkdir -p "$OUTPUT_DIR"
 
 IMAGE_BASENAME="${IMAGE_NAME##*/}"

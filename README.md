@@ -2,33 +2,60 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md)
 
-Build a custom Caddy Docker image with extra modules, export it as an offline `tar` archive, and load it on another machine with `docker load`.
+Custom Caddy images with extra modules.
 
-This repository starts with the Cloudflare DNS module and can be extended by editing `modules.txt`.
+Use the published Docker image if you just want to run Caddy. Use this repository if you want a reproducible way to build your own image archive with additional modules.
 
-## What It Does
+The default module set currently includes Cloudflare DNS.
 
-- builds a custom Caddy image from the official Caddy release
-- bundles the modules listed in `modules.txt`
-- exports a Docker archive to `dist/`
-- defaults to the latest stable upstream Caddy release
-- defaults to `linux/amd64`
+## Use The Published Image
 
-## Quick Start
+Pull from Docker Hub:
 
-Build the default archive:
+```bash
+docker pull goalonez/z-caddy:latest
+```
+
+Example `docker compose`:
+
+```yaml
+services:
+  z-caddy:
+    image: goalonez/z-caddy:latest
+    container_name: z-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/conf:/etc/caddy
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+    restart: unless-stopped
+```
+
+## Build Your Own Archive
+
+Clone the repository and run:
 
 ```bash
 ./scripts/build.sh
 ```
 
-Load it on the target machine:
+This builds an offline archive for `linux/amd64` by default and writes files to `dist/`:
+
+```text
+dist/z-caddy_<caddy-version>_linux-amd64.tar
+dist/z-caddy_<caddy-version>_linux-amd64.tar.sha256
+```
+
+Load the archive on the target machine:
 
 ```bash
 docker load -i dist/z-caddy_<caddy-version>_linux-amd64.tar
 ```
 
-Build ARM64 explicitly:
+Build `linux/arm64` explicitly:
 
 ```bash
 ./scripts/build.sh --platform linux/arm64
@@ -42,9 +69,9 @@ Pin a specific Caddy version:
 
 Local builds are designed to keep only the exported files in `dist/`.
 
-## Module Configuration
+## Modules
 
-Edit `modules.txt`.
+Edit `modules.txt` to change the bundled modules.
 
 - one module per line
 - empty lines are ignored
@@ -58,7 +85,7 @@ github.com/caddy-dns/cloudflare@v0.2.4
 github.com/caddyserver/nginx-adapter
 ```
 
-## Build Script Options
+## Build Options
 
 ```text
 --platform <platform>      Target platform. Default: linux/amd64
@@ -75,12 +102,12 @@ Show help:
 ./scripts/build.sh --help
 ```
 
-## Version Rules
+## Versioning
 
 - local builds use the latest stable upstream Caddy release by default
-- you can override the version with `--caddy-version`
+- `--caddy-version` overrides the default version
 - published versions follow upstream Caddy versions directly
-- Docker Hub uses `latest` and `<caddy-version>` tags
+- Docker Hub publishes `latest` and `<caddy-version>` tags
 
 ## License
 

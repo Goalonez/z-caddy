@@ -2,24 +2,51 @@
 
 [English](./README.md) | [简体中文](./README.zh-CN.md)
 
-用于构建带扩展模块的 Caddy Docker 镜像，并导出为离线 `tar` 包，方便在其他机器上通过 `docker load` 导入使用。
+带扩展模块的 Caddy 镜像。
 
-仓库当前默认集成 `Cloudflare DNS` 模块，后续可以通过修改 `modules.txt` 扩展更多模块。
+如果你只是想直接运行 Caddy，直接拉取已发布的 Docker 镜像即可。这个仓库的价值在于：当你需要加入更多模块时，可以用统一、可复现的方式自己构建镜像和离线 tar 包。
 
-## 这个仓库是干什么的
+当前默认集成的模块是 Cloudflare DNS。
 
-- 基于官方 Caddy 版本构建自定义镜像
-- 打包 `modules.txt` 里声明的模块
-- 导出 Docker 离线包到 `dist/`
-- 默认跟随 Caddy 官方最新稳定版
-- 默认构建 `linux/amd64`
+## 直接使用已发布镜像
 
-## 快速使用
+从 Docker Hub 拉取：
 
-构建默认离线包：
+```bash
+docker pull goalonez/z-caddy:latest
+```
+
+`docker compose` 示例：
+
+```yaml
+services:
+  z-caddy:
+    image: goalonez/z-caddy:latest
+    container_name: z-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/conf:/etc/caddy
+      - ./caddy/data:/data
+      - ./caddy/config:/config
+    restart: unless-stopped
+```
+
+## 自己构建离线包
+
+拉取仓库后执行：
 
 ```bash
 ./scripts/build.sh
+```
+
+默认会构建 `linux/amd64` 离线包，并输出到 `dist/`：
+
+```text
+dist/z-caddy_<caddy-version>_linux-amd64.tar
+dist/z-caddy_<caddy-version>_linux-amd64.tar.sha256
 ```
 
 在目标机器上导入：
@@ -28,7 +55,7 @@
 docker load -i dist/z-caddy_<caddy-version>_linux-amd64.tar
 ```
 
-显式构建 ARM64：
+显式构建 `linux/arm64`：
 
 ```bash
 ./scripts/build.sh --platform linux/arm64
@@ -78,7 +105,7 @@ github.com/caddyserver/nginx-adapter
 ## 版本规则
 
 - 本地构建默认跟随 Caddy 官方最新稳定版
-- 可以通过 `--caddy-version` 显式覆盖
+- `--caddy-version` 可以显式覆盖默认版本
 - 发布版本直接跟随上游 Caddy 版本
 - Docker Hub 使用 `latest` 和 `<caddy-version>` 两类标签
 
