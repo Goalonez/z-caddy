@@ -6,7 +6,7 @@
 
 如果你只是想直接运行 Caddy，直接拉取已发布的 Docker 镜像即可。这个仓库的价值在于：当你需要加入更多模块时，可以用统一、可复现的方式自己构建镜像和离线 tar 包。
 
-当前默认集成的模块是 Cloudflare DNS。
+当前默认集成的模块是 Cloudflare DNS 和 caddy-security。
 
 ## 直接使用已发布镜像
 
@@ -81,6 +81,7 @@ docker load -i dist/z-caddy_<caddy-version>_linux-amd64.tar
 
 ```text
 github.com/caddy-dns/cloudflare@v0.2.4
+github.com/greenpau/caddy-security@v1.1.62
 github.com/caddyserver/nginx-adapter
 ```
 

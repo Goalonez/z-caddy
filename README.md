@@ -6,7 +6,7 @@ Custom Caddy images with extra modules.
 
 Use the published Docker image if you just want to run Caddy. Use this repository if you want a reproducible way to build your own image archive with additional modules.
 
-The default module set currently includes Cloudflare DNS.
+The default module set currently includes Cloudflare DNS and caddy-security.
 
 ## Use The Published Image
 
@@ -81,6 +81,7 @@ Example:
 
 ```text
 github.com/caddy-dns/cloudflare@v0.2.4
+github.com/greenpau/caddy-security@v1.1.62
 github.com/caddyserver/nginx-adapter
 ```
 

@@ -31,3 +31,6 @@ jobs:
 
       - name: Verify Cloudflare module
         run: docker run --rm z-caddy:latest caddy list-modules | grep 'dns.providers.cloudflare'
+
+      - name: Verify caddy-security module
+        run: docker run --rm z-caddy:latest caddy list-modules | grep 'http.handlers.authenticator'
