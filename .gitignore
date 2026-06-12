@@ -14,3 +14,14 @@ CLAUDE.md
 # Editor settings
 .idea/
 .vscode/
+
+.idea/
+.vscode/
+AGENTS.md
+CLAUDE.md
+.claude/
+.codex/
+.opencode/
+.agents/
+.trellis/
+.history/
